@@ -2,7 +2,7 @@
  * @name HeaderPresence
  * @author KingGamingYT
  * @description See a user's current activities from the header of their user profile, just as it used to be.
- * @version 1.0.0
+ * @version 1.0.1
  */ 
 
 const { Data, Webpack, React, Patcher, DOM, UI } = BdApi;
@@ -70,6 +70,7 @@ const statusCSS = webpackify(
         scroll-snap-type: y mandatory;
         & .overlay {
                 scroll-snap-align: start;
+                scroll-margin-top: 15px;
             }
 	    &::-webkit-scrollbar {
 		    width: 6px;
