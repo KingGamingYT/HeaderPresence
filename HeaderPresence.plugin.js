@@ -2,7 +2,7 @@
  * @name HeaderPresence
  * @author KingGamingYT
  * @description See a user's current activities from the header of their user profile, just as it used to be.
- * @version 1.0.1
+ * @version 1.0.2
  */ 
 
 const { Data, Webpack, React, Patcher, DOM, UI } = BdApi;
@@ -37,7 +37,7 @@ const settings = {
         default: true,
         changed: (v) => {
             if (v)
-                Patcher.before("hideActivity", profileModal2, "Z", hideActivityPatch);
+                Patcher.before("hideActivity", profileModalTwo, "Z", hideActivityPatch);
             else
                 Patcher.unpatchAll('hideActivity');
         }
