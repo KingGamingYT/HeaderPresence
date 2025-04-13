@@ -2,7 +2,7 @@
  * @name HeaderPresence
  * @author KingGamingYT
  * @description See a user's current activities from the header of their user profile, just as it used to be.
- * @version 1.0.2
+ * @version 1.1.0
  */ 
 
 const { Data, Webpack, React, Patcher, DOM, UI } = BdApi;
@@ -14,7 +14,7 @@ const { useStateFromStores } = Webpack.getMangled(m => m.Store, {
         useStateFromStores: Webpack.Filters.byStrings("useStateFromStores")
         }, { raw: true });
 const profileModal = Webpack.getMangled("FULL_SIZE", {user: x=>x.toString?.().includes('==')})
-const profileModalTwo = Webpack.getByStrings('hidePersonalInformation','PRESS_SECTION', {defaultExport: false});
+const profileModalTwo = Webpack.waitForModule(Webpack.Filters.byStrings('hidePersonalInformation','PRESS_SECTION'), {defaultExport: false});
 const ActivityCard = Webpack.getByStrings("USER_PROFILE_LIVE_ACTIVITY_CARD", "UserProfileActivityCard");
 const SpotifyCard = Webpack.getByStrings("USER_PROFILE_LIVE_ACTIVITY_CARD", "HOVER_ACTIVITY_CARD");
 const VoiceCard = Webpack.getByStrings("USER_PROFILE_VOICE_ACTIVITY_CARD", "OPEN_VOICE_GUILD");
@@ -25,9 +25,11 @@ const { Button, closeModal } = Webpack.getMangled(/ConfirmModal:\(\)=>.{1,3}.Con
 const FormSwitch = Webpack.getByStrings('ERROR','tooltipNote', { searchExports: true });
 
 const hideActivityPatch = (that, [props]) => {
-    if (!props?.items) return;
+    if (Data.load('HeaderPresence', 'hideActivity')) {
+        if (!props?.items) return;
 
-    return props.items = props.items?.filter(item => item.section !== "ACTIVITY");
+        return props.items = props.items?.filter(item => item.section !== "ACTIVITY");
+    }
 }
 
 const settings = {
@@ -133,26 +135,46 @@ module.exports = class HeaderPresence {
             if (Data.load('HeaderPresence', key) === undefined)
                 Data.save('HeaderPresence', key, settings[key].default);
         }
-        if (Data.load('HeaderPresence', 'hideActivity')) {
-            Patcher.before("hideActivity", profileModalTwo, "Z", hideActivityPatch);
+
+        function ActivityCards({props, activities}) {
+            const _activities = activities.filter(activity => activity && activity.type !== 4 && activity.name && !activity.name.includes("Spotify"));
+            return _activities.map(activity => React.createElement(ActivityCard, {key: "ac" + activity.created_at, user: props.user, currentUser: UserStore.getCurrentUser(), activity: activity}));
+        }
+        function SpotifyCards({props, activities}) {
+            const _activities = activities.filter(activity => activity && activity?.type !== 4 && !props.user.bot === true);
+            return _activities.map(activity => React.createElement(SpotifyCard, {key: "sc" + activity.created_at, user: props.user, currentUser: UserStore.getCurrentUser(), activity: activity}));
+        }
+        function VoiceCards({props, voice}) {
+            const stream = useStateFromStores([ StreamStore ], () => StreamStore.getAnyStreamForUser(props.user.id));
+            const channel = useStateFromStores([ ChannelStore ], () => ChannelStore.getChannel(voice));
+          
+            if (stream || !channel) return;
+            return React.createElement(VoiceCard, {user: props.user, voiceChannel: channel, currentUser: UserStore.getCurrentUser()});
+        }
+        function StreamCards({props, voice}) {
+            const streams = useStateFromStores([ StreamStore ], () => StreamStore.getAllApplicationStreamsForChannel(voice));
+            const _streams = streams.filter(streams => streams && streams.ownerId == props.user.id);
+            return _streams.map(streams => React.createElement(StreamCard, {user: props.user, stream: streams, currentUser: UserStore.getCurrentUser()}))
         }
 
         DOM.addStyle('statusCSS', statusCSS);
+        profileModalTwo.then(profileModalTwo => {Patcher.before("hideActivity", profileModalTwo, "Z", hideActivityPatch)});
         Patcher.after("HeaderPresence", profileModal, "user", (that, [props], res) => {
             const activities = useStateFromStores([ ActivityStore ], () => ActivityStore.getActivities(props.user.id));
             const voice = useStateFromStores([ Webpack.getStore('VoiceStateStore') ], () => Webpack.getStore('VoiceStateStore').getVoiceStateForUser(props.user.id)?.channelId);
 
+
             if (!props.profileType?.includes("FULL_SIZE")) return;
             return [
                 res,
-            (!activities.length == 0 || voice != undefined) && React.createElement("div", {
+            (activities.length !== 0 || voice !== undefined) && React.createElement("div", {
                     className: "hp-activityContainer",
                     style: {overflow: "hidden auto"},
                     children: [
-                        voice != undefined && useStateFromStores([ StreamStore ], () => StreamStore.getAllApplicationStreamsForChannel(voice).map((streams) => streams.ownerId == props.user.id && React.createElement(StreamCard, {user: props.user, stream: streams, currentUser: useStateFromStores([ UserStore ], () => UserStore.getCurrentUser())}))),
-                        voice != undefined && useStateFromStores([ StreamStore ], () => StreamStore.getAnyStreamForUser(props.user.id) == null) && React.createElement(VoiceCard, {user: props.user, voiceChannel: useStateFromStores([ ChannelStore ], () => ChannelStore.getChannel(voice)), currentUser: useStateFromStores([ UserStore ], () => UserStore.getCurrentUser())}),
-                        activities.map((activity) => activity?.type != 4 && !activity.name.includes("Spotify") && React.createElement(ActivityCard, {user: props.user, currentUser: useStateFromStores([ UserStore ], () => UserStore.getCurrentUser()), activity: activity})),
-                        activities.map((activity) => activity?.type != 4 && !props.user.bot == true && React.createElement(SpotifyCard, {user: props.user, currentUser: useStateFromStores([ UserStore ], () => UserStore.getCurrentUser()), activity: activity})),
+                        React.createElement(StreamCards, {props, voice}),
+                        React.createElement(VoiceCards, {props, voice}),
+                        React.createElement(SpotifyCards, {props, activities}),
+                        React.createElement(ActivityCards, {props, activities})
                     ]
                 })
             ]
