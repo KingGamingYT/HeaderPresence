@@ -2,7 +2,7 @@
  * @name HeaderPresence
  * @author KingGamingYT
  * @description See a user's current activities from the header of their user profile, just as it used to be.
- * @version 1.2.0
+ * @version 1.2.1
  */ 
 
 const { Data, Webpack, React, Patcher, DOM, UI } = BdApi;
@@ -13,7 +13,7 @@ const StreamStore = Webpack.getStore('ApplicationStreamingStore');
 const { useStateFromStores } = Webpack.getMangled(m => m.Store, {
         useStateFromStores: Webpack.Filters.byStrings("useStateFromStores")
         }, { raw: true });
-const profileModal = Webpack.getMangled("FULL_SIZE", {user: x=>x.toString?.().includes('==')})
+const profileModal = Webpack.getMangled("clickableUsername", {user: x=>x.toString?.().includes('==')});
 const profileModalTwo = Webpack.waitForModule(Webpack.Filters.byStrings('hidePersonalInformation','PRESS_SECTION'), {defaultExport: false});
 const ActivityCard = Webpack.getByStrings("USER_PROFILE_LIVE_ACTIVITY_CARD", "UserProfileActivityCard");
 const SpotifyCard = Webpack.getByStrings("USER_PROFILE_LIVE_ACTIVITY_CARD", "HOVER_ACTIVITY_CARD");
@@ -76,7 +76,7 @@ const restoreCustomPatch = (that, [props], res) => {
     const activities = useStateFromStores([ ActivityStore ], () => ActivityStore.getActivities(props.user.id));
     
     if (Data.load('HeaderPresence', 'restoreCustom')) {
-        if (!props.profileType?.includes("FULL_SIZE")) return;
+        if (!props.tags.props.themeType?.includes("MODAL")) return;
 
         if (Array.isArray(res.props?.children)) {
             if (activities.length !== 0) {
@@ -116,9 +116,9 @@ const changelog = {
     changelog: [
         {
             "title": "Changes",
-            "type" : "added",
+            "type" : "improved",
             "items": [
-                "Added a toggle to change how custom statuses are displayed to appear older"
+                "Fixed the plugin following discord's profile update"
             ]
         }
     ]
@@ -126,8 +126,7 @@ const changelog = {
 
 const styles = Object.assign({}, 
     Webpack.getByKeys("overlay", "inner"), 
-    Webpack.getByKeys("inner", "container"),
-    Webpack.getByKeys("fullSize", "biteSize", "overlay", "outer"));
+    Webpack.getByKeys("inner", "container"));
 
 const statusCSS = webpackify(
     `
@@ -167,7 +166,7 @@ const statusCSS = webpackify(
         }
     }
 
-    .fullSize:has(.hp-customStatusContainer) .container { 
+    .user-profile-modal:has(.hp-customStatusContainer) .container { 
         display: none;
     }
     .hp-customStatusContainer {
@@ -203,7 +202,7 @@ const statusCSS = webpackify(
         font-weight: 500;
         font-size: 14px;
     }
-    .fullSize:has(.hp-activityContainer:not(:empty)) .hp-customStatusText { 
+    .user-profile-modal:has(.hp-activityContainer:not(:empty)) .hp-customStatusText { 
         font-weight: 550;
     }
     `
@@ -253,7 +252,7 @@ module.exports = class HeaderPresence {
             const activities = useStateFromStores([ ActivityStore ], () => ActivityStore.getActivities(props.user.id));
             const voice = useStateFromStores([ Webpack.getStore('VoiceStateStore') ], () => Webpack.getStore('VoiceStateStore').getVoiceStateForUser(props.user.id)?.channelId);
 
-            if (!props.profileType?.includes("FULL_SIZE")) return;
+            if (!props.tags.props.themeType?.includes("MODAL")) return;
             return [
                 res,
             (activities.length !== 0 || voice !== undefined) && React.createElement("div", {
