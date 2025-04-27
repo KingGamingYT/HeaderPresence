@@ -2,7 +2,7 @@
  * @name HeaderPresence
  * @author KingGamingYT
  * @description See a user's current activities from the header of their user profile, just as it used to be.
- * @version 1.2.1
+ * @version 1.2.2
  */ 
 
 const { Data, Webpack, React, Patcher, DOM, UI } = BdApi;
@@ -17,8 +17,8 @@ const profileModal = Webpack.getMangled("clickableUsername", {user: x=>x.toStrin
 const profileModalTwo = Webpack.waitForModule(Webpack.Filters.byStrings('hidePersonalInformation','PRESS_SECTION'), {defaultExport: false});
 const ActivityCard = Webpack.getByStrings("USER_PROFILE_LIVE_ACTIVITY_CARD", "UserProfileActivityCard");
 const SpotifyCard = Webpack.getByStrings("USER_PROFILE_LIVE_ACTIVITY_CARD", "HOVER_ACTIVITY_CARD");
-const VoiceCard = Webpack.getByStrings("USER_PROFILE_VOICE_ACTIVITY_CARD", "OPEN_VOICE_GUILD");
-const StreamCard = Webpack.getByStrings("stream", "OPEN_VOICE_GUILD");
+const VoiceCard = Webpack.getByStrings("USER_PROFILE_VOICE_ACTIVITY_CARD");
+const StreamCard = Webpack.getByStrings("stream", "UserProfileFeaturedActivity");
 const EmojiRenderer = Webpack.getByStrings('translateSurrogatesToInlineEmoji');
 const { Button, closeModal } = Webpack.getMangled(/ConfirmModal:\(\)=>.{1,3}.ConfirmModal/, 
     { Button: x=>x.toString?.().includes('submittingFinishedLabel'), 
@@ -118,7 +118,7 @@ const changelog = {
             "title": "Changes",
             "type" : "improved",
             "items": [
-                "Fixed the plugin following discord's profile update"
+                "Fixed broken patches"
             ]
         }
     ]
