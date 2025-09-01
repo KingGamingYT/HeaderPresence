@@ -1,3 +1,5 @@
+# SUPERCEDED BY https://github.com/KingGamingYT/NewOldProfiles/ - THIS PLUGIN NO LONGER WORKS AS INTENDED
+
 # HeaderPresence
  A plugin for BetterDiscord which displays a user's current activities from the header of their user profile, just as it used to be.
 
